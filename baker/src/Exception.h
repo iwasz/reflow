@@ -1,20 +1,27 @@
 /****************************************************************************
  *                                                                          *
- *  Author : lukasz.iwaszkiewicz@gmail.com (based on ST).                   *
+ *  Author : lukasz.iwaszkiewicz@gmail.com                                  *
  *  ~~~~~~~~                                                                *
  *  License : see COPYING file for details.                                 *
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef __USB_VENDOR_SPECIFIC_H
-#define __USB_VENDOR_SPECIFIC_H
+#ifndef ANY_KEY_EXCEPTION_H_
+#define ANY_KEY_EXCEPTION_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <exception>
+#include <string>
 
-#include "usbd_ioreq.h"
+class Exception : public std::exception {
+public:
 
-extern USBD_ClassTypeDef vendorClass;
+        Exception (std::string const &s) : message (s) {}
+        virtual ~Exception () {}
+        virtual const char* what() const noexcept { return message.c_str (); }
 
-#endif /* __USB_HID_H */
+private:
+
+        std::string message;
+};
+
+#endif /* EXCEPTION_H_ */

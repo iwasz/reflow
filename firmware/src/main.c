@@ -2,7 +2,6 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "vendor_specific_class.h"
-#include "vendor_specific_interface.h"
 
 SPI_HandleTypeDef hspi1;
 USBD_HandleTypeDef usbdDevice;
@@ -30,15 +29,9 @@ int main (void)
         for (int i = 0; i < 1000000; ++i)
                 ;
 
-//        USBD_Init (&usbdDevice, &HID_Desc, 0);
         USBD_Init (&usbdDevice, &usbDescriptorsVirtualTable, 0);
-        USBD_RegisterClass (&usbdDevice, &USBD_HID);
-//        usbClassRegisterInterface (&usbdDevice, &usbInterfaceFops);
+        USBD_RegisterClass (&usbdDevice, &vendorClass);
         USBD_Start (&usbdDevice);
-
-#define BUFFERSIZE 4
-        uint8_t aRxBuffer[BUFFERSIZE];
-        uint8_t aTxBuffer[BUFFERSIZE];
 
         while (1) {
                 relay_GPIO_Port->BSRR |= relay_Pin;
@@ -52,8 +45,6 @@ int main (void)
                 for (int i = 0; i < 1000000; ++i)
                         ;
                 //                HAL_Delay (500);
-
-//                HAL_UART_Transmit (&aRxBufferhuart1, "test\n", 5, 5000);
 
 #if 0
                 GPIOA->BSRR |= GPIO_PIN_4 << 16;

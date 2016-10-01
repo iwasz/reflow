@@ -12,6 +12,7 @@
 
 #undef errno
 extern int errno;
+extern UART_HandleTypeDef huart1;
 
 /*
  environ
@@ -226,6 +227,6 @@ int _wait (int *status)
  */
 int _write (int file, char *ptr, int len)
 {
-        //        cdcItfTransmit ((uint8_t *) ptr, len);
+        HAL_UART_Transmit (&huart1, (uint8_t *) ptr, len, 5000);
         return len;
 }
