@@ -1,2 +1,4 @@
 firmware/CMakeLists.txt.user
 firmware/build/
+baker/CMakeLists.txt.user
+baker/build/
