@@ -102,7 +102,7 @@ void UsbService::sendControlRequest (uint8_t request, uint8_t *buff, uint8_t len
         // Ustaw temperaturę:
         int ret = libusb_control_transfer (impl->device,
                                            LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE | direction, // LIBUSB_RECIPIENT_DEVICE
-                                           request, 0x2222, 0x0000, NULL, 0, 500);
+                                           request, 0x2222, 0x0000, buff, len, 500);
 
         if (ret < 0) {
                 throw Exception ("UsbService::transmitConfiguration : " + std::string (libusb_error_name (ret)) + ".");

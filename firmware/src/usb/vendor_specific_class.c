@@ -8,6 +8,7 @@
 static uint8_t usbdVencorInit (USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t usbdVendorDeinit (USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev);
 static uint8_t *usbdVendorGetCfgDesc (uint16_t *length);
 static uint8_t *usbdVendorGetDeviceQualifierDesc (uint16_t *length);
 
@@ -18,7 +19,7 @@ USBD_ClassTypeDef vendorClass = {
         // Control Endpoints
         usbdVendorSetup, // Setup
         NULL,            // EP0_TxSent
-        NULL,            // EP0_RxReady
+        EP0_RxReady,     // EP0_RxReady
 
         // Class Specific Endpoints
         NULL, // DataIn
@@ -92,23 +93,23 @@ uint8_t usbdVendorCfgFsDesc[USB_CONFIG_DESC_SIZ] = {
                                  /* specific.*/
         0,                       /* iInterface: Index of string descriptor, or 0 if there is no string. */
 
-//        /*
-//         * Alternative intrerface descriptor?
-//         */
-//        0x09,                    /* bLength : Interface Descriptor size == 0x09. */
-//        USB_DESC_TYPE_INTERFACE, /* bDescriptorType : Interface descriptor type (constant 0x04). */
-//        0x00,                    /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
-//                                 /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
-//        0x01,                    /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
-//                                 /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
-//                                 /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
-//        0x00,                    /* bNumEndpoints : Liczba endpointów prócz EP0. */
-//        0xff,                    /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
-//                                 /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
-//        0xff,                    /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
-//        0xff,                    /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
-//                                 /* specific.*/
-//        0,                       /* iInterface: Index of string descriptor, or 0 if there is no string. */
+        //        /*
+        //         * Alternative intrerface descriptor?
+        //         */
+        //        0x09,                    /* bLength : Interface Descriptor size == 0x09. */
+        //        USB_DESC_TYPE_INTERFACE, /* bDescriptorType : Interface descriptor type (constant 0x04). */
+        //        0x00,                    /* bInterfaceNumber: Unikalny numer. Urządzenia typu composite będą miały następne interfejsy, a każdy */
+        //                                 /* będzie miał kolejne numery. Domyślny interfejs ma numer 0. */
+        //        0x01,                    /* bAlternateSetting: Unikalny numer "alternate settings". Każdy interfejs może mieć odmiany, które */
+        //                                 /* właśnie nazywamy "alternate setting". Każde takie ustawienie musi mieć unikalny numer w tym polu. */
+        //                                 /* Domyślny numer to 0 i kazdy interfejs musi mieć takie "alternatywne ustawienie" o nr. 0. */
+        //        0x00,                    /* bNumEndpoints : Liczba endpointów prócz EP0. */
+        //        0xff,                    /* bInterfaceClass : Klasa. Listę można znaleźć na wikipedii. 0xff to vendor specific. Klasę urządzenia */
+        //                                 /* można także podać w deskryptorze urządzenia, ale najczęściej się podaj tu. 0x03 to HID. */
+        //        0xff,                    /* bInterfaceSubClass : 1=BOOT, 0=no boot. Ustanowione przez USB-IF dla klas. 0xff == vendor specific. */
+        //        0xff,                    /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse. Ustanowione przez USB-IF dla klas. 0xff == vendor */
+        //                                 /* specific.*/
+        //        0,                       /* iInterface: Index of string descriptor, or 0 if there is no string. */
 };
 
 /** @defgroup USBD_HID_Private_Functions
@@ -132,6 +133,8 @@ static uint8_t usbdVencorInit (USBD_HandleTypeDef *pdev, uint8_t cfgidx) { retur
   * @retval status
   */
 static uint8_t usbdVendorDeinit (USBD_HandleTypeDef *pdev, uint8_t cfgidx) { return USBD_OK; }
+
+static uint8_t rxBuf [2];
 
 /**
   * @brief  USBD_HID_Setup
@@ -165,7 +168,7 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
                 //                        break;
 
                 //                case HID_REQ_GET_IDLE:
-                //                        USBD_CtlSendData (pdev, (uint8_t *)&hhid->IdleState, 1);
+                // USBD_CtlSendData (pdev, (uint8_t *)&hhid->IdleState, 1);
                 //                        break;
 
                 //                default:
@@ -176,6 +179,8 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
 
         case USB_REQ_TYPE_VENDOR:
                 printf ("USB_REQ_TYPE_VENDOR [%d, %d, %d]\n", req->bRequest, req->wValue, req->wIndex);
+
+                USBD_CtlPrepareRx (pdev, rxBuf, 2);
                 break;
 
         case USB_REQ_TYPE_STANDARD:
@@ -201,6 +206,13 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
                 }
         }
 
+        return USBD_OK;
+}
+
+static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev)
+{
+        //USBD_StatusTypeDef USBD_CtlPrepareRx (USBD_HandleTypeDef * pdev, uint8_t * pbuf, uint16_t len);
+        printf ("EP0_RxReady\n");
         return USBD_OK;
 }
 
