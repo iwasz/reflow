@@ -1,0 +1,22 @@
+Circuit: * Z:\home\iwasz\workspace\reflow-oven\relay-driver.asc
+
+Direct Newton iteration for .op point succeeded.
+
+Date: Wed Sep 21 23:44:52 2016
+Total elapsed time: 0.684 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 280339
+traniter = 280327
+tranpoints = 78145
+accept = 52565
+rejected = 25580
+matrix size = 14
+fillins = 2
+solver = Normal
+Matrix Compiler1: 964 bytes object code size  0.4/0.2/[0.2]
+Matrix Compiler2: off  [0.2]/0.2/0.3
+
+
