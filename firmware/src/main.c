@@ -33,7 +33,12 @@ int main (void)
         USBD_RegisterClass (&usbdDevice, &vendorClass);
         USBD_Start (&usbdDevice);
 
+
+        reflow.actualTemp = 0;
+        uint8_t spiRxBuffer[4];
+
         while (1) {
+#if 0
                 relay_GPIO_Port->BSRR |= relay_Pin;
                 //                HAL_Delay (500);
 
@@ -45,45 +50,41 @@ int main (void)
                 for (int i = 0; i < 1000000; ++i)
                         ;
                 //                HAL_Delay (500);
+#endif
 
-#if 0
+#if 1
+                HAL_UART_Transmit (&huart1, (uint8_t *)"z", 1, 5000);
                 GPIOA->BSRR |= GPIO_PIN_4 << 16;
-                HAL_Delay (1);
-                //                HAL_StatusTypeDef status = HAL_SPI_TransmitReceive (&hspi1, (uint8_t *)aTxBuffer, (uint8_t *)aRxBuffer, 4, 5000);
+                HAL_Delay (10);
 
-                hspi1.Instance->DR = (uint8_t)0xff;
+                hspi1.Instance->DR = (uint8_t)0x00;
+//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+//                        ;
 
-                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-                        ;
+//                spiRxBuffer[0] = hspi1.Instance->DR;
 
-                aRxBuffer[0] = hspi1.Instance->DR;
-                hspi1.Instance->DR = (uint8_t)0xff;
-                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-                        ;
-                aRxBuffer[1] = hspi1.Instance->DR;
-                hspi1.Instance->DR = (uint8_t)0xff;
-                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-                        ;
-                aRxBuffer[2] = hspi1.Instance->DR;
-                hspi1.Instance->DR = (uint8_t)0xff;
-                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-                        ;
-                aRxBuffer[3] = hspi1.Instance->DR;
+//                hspi1.Instance->DR = (uint8_t)0xff;
+//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+//                        ;
+//                spiRxBuffer[1] = hspi1.Instance->DR;
 
-                HAL_Delay (1);
+//                hspi1.Instance->DR = (uint8_t)0xff;
+//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+//                        ;
+//                spiRxBuffer[2] = hspi1.Instance->DR;
+
+//                hspi1.Instance->DR = (uint8_t)0xff;
+//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+//                        ;
+//                spiRxBuffer[3] = hspi1.Instance->DR;
+
+                HAL_Delay (10);
                 GPIOA->BSRR |= GPIO_PIN_4;
 
-                //                if (status == HAL_OK) {
-                int16_t temp = (((uint16_t)aRxBuffer[0] << 8) | (uint16_t)aRxBuffer[1]) >> 2;
-                temp /= 4;
-                printf ("%d\n", temp);
-                relay_GPIO_Port->BSRR |= relay_Pin;
-                //                }
-                //                else {
-                //                        Error_Handler ();
-                //                }
+//                reflow.actualTemp = (((uint16_t)spiRxBuffer[0] << 8) | (uint16_t)spiRxBuffer[1]) >> 2;
+//                reflow.actualTemp /= 4;
 
-                HAL_Delay (500);
+                HAL_Delay (1000);
 #endif
         }
 }
@@ -144,6 +145,7 @@ static void MX_SPI1_Init (void)
         hspi1.Init.CRCPolynomial = 7;
         hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
         hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+
         if (HAL_SPI_Init (&hspi1) != HAL_OK) {
                 Error_Handler ();
         }

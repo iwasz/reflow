@@ -99,26 +99,6 @@ void HAL_SPI_MspInit (SPI_HandleTypeDef *hspi)
         }
 }
 
-void HAL_SPI_MspDeInit (SPI_HandleTypeDef *hspi)
-{
-
-        if (hspi->Instance == SPI1) {
-                /* USER CODE BEGIN SPI1_MspDeInit 0 */
-
-                /* USER CODE END SPI1_MspDeInit 0 */
-                /* Peripheral clock disable */
-                __HAL_RCC_SPI1_CLK_DISABLE ();
-
-                /**SPI1 GPIO Configuration
-                PA5     ------> SPI1_SCK
-                PA6     ------> SPI1_MISO
-                */
-                HAL_GPIO_DeInit (GPIOA, GPIO_PIN_5 | GPIO_PIN_6);
-        }
-        /* USER CODE BEGIN SPI1_MspDeInit 1 */
-
-        /* USER CODE END SPI1_MspDeInit 1 */
-}
 
 void HAL_UART_MspInit (UART_HandleTypeDef *huart)
 {

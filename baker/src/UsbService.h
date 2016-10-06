@@ -22,15 +22,15 @@ public:
 
         typedef std::vector <uint8_t> Buffer;
 
-        struct __attribute__ ((packed)) PidData {
-                int16_t kp;
-                int16_t ki;
-                int16_t kd;
-                int32_t p;
-                int32_t i;
-                int32_t d;
-                int16_t fac;
-        };
+//        struct __attribute__ ((packed)) PidData {
+//                int16_t kp;
+//                int16_t ki;
+//                int16_t kd;
+//                int32_t p;
+//                int32_t i;
+//                int32_t d;
+//                int16_t fac;
+//        };
 
         UsbService ();
         ~UsbService ();

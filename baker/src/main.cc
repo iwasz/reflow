@@ -18,19 +18,23 @@ int main (int argc, char **argv)
         try {
                 UsbServiceGuard<UsbService> guard;
 
-//                guard.service.setTempInstant (50);
+                //                guard.service.setTempInstant (50);
                 guard.service.setKp (-666);
-//                guard.service.setI (1);
-//                guard.service.setD (1);
+                //                guard.service.setI (1);
+                //                guard.service.setD (1);
 
-//                while (true) {
-//                        UsbService::PidData pd = guard.service.getPidData ();
+                std::cerr << guard.service.getCurrentTemp () << std::endl;
 
-//                        std::cerr << "T = " << guard.service.getCurrentTemp () << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " << pd.kd
-//                                  << ", P = " << pd.p << ", I = " << pd.i << ", D = " << pd.d << ", fac = " << pd.fac << ", U = " << pd.p + pd.i - pd.d
-//                                  << std::endl;
-//                        sleep (1);
-//                }
+                //                while (true) {
+                //                        UsbService::PidData pd = guard.service.getPidData ();
+
+                //                        std::cerr << "T = " << guard.service.getCurrentTemp () << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " <<
+                //                        pd.kd
+                //                                  << ", P = " << pd.p << ", I = " << pd.i << ", D = " << pd.d << ", fac = " << pd.fac << ", U = " << pd.p +
+                //                                  pd.i - pd.d
+                //                                  << std::endl;
+                //                        sleep (1);
+                //                }
         }
         catch (std::exception const &e) {
                 std::cerr << "An exception has occured in ~UsbServiceGuard. Message : " << e.what () << std::endl;
