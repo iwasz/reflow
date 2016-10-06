@@ -123,7 +123,14 @@ uint8_t usbdVendorCfgFsDesc[USB_CONFIG_DESC_SIZ] = {
   * @param  cfgidx: Configuration index
   * @retval status
   */
-static uint8_t usbdVencorInit (USBD_HandleTypeDef *pdev, uint8_t cfgidx) { return USBD_OK; }
+static uint8_t usbdVencorInit (USBD_HandleTypeDef *pdev, uint8_t cfgidx)
+{
+        static UsbState usbState;
+        usbState.pendingRequest = 0;
+        usbState.reflow = &reflow;
+        pdev->pUserData = &usbState;
+        return USBD_OK;
+}
 
 /**
   * @brief  USBD_HID_Init
@@ -134,8 +141,6 @@ static uint8_t usbdVencorInit (USBD_HandleTypeDef *pdev, uint8_t cfgidx) { retur
   */
 static uint8_t usbdVendorDeinit (USBD_HandleTypeDef *pdev, uint8_t cfgidx) { return USBD_OK; }
 
-static uint8_t rxBuf [2];
-
 /**
   * @brief  USBD_HID_Setup
   *         Handle the HID specific requests
@@ -145,74 +150,110 @@ static uint8_t rxBuf [2];
   */
 static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
-        //        uint16_t len = 0;
-        //        uint8_t *pbuf = NULL;
-        //        USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *)pdev->pClassData;
+        UsbState *usbState = (UsbState *)pdev->pUserData;
 
         switch (req->bmRequest & USB_REQ_TYPE_MASK) {
-        case USB_REQ_TYPE_CLASS:
-                printf ("USB_REQ_TYPE_CLASS [%d, %d]\n", req->bRequest, req->wValue);
-
-                //                switch (req->bRequest) {
-
-                //                case HID_REQ_SET_PROTOCOL:
-                //                        hhid->Protocol = (uint8_t) (req->wValue);
-                //                        break;
-
-                //                case HID_REQ_GET_PROTOCOL:
-                //                        USBD_CtlSendData (pdev, (uint8_t *)&hhid->Protocol, 1);
-                //                        break;
-
-                //                case HID_REQ_SET_IDLE:
-                //                        hhid->IdleState = (uint8_t) (req->wValue >> 8);
-                //                        break;
-
-                //                case HID_REQ_GET_IDLE:
-                // USBD_CtlSendData (pdev, (uint8_t *)&hhid->IdleState, 1);
-                //                        break;
-
-                //                default:
-                //                        USBD_CtlError (pdev, req);
-                //                        return USBD_FAIL;
-                //                }
-                break;
-
         case USB_REQ_TYPE_VENDOR:
+#if 0
                 printf ("USB_REQ_TYPE_VENDOR [%d, %d, %d]\n", req->bRequest, req->wValue, req->wIndex);
+#endif
+                switch (req->bRequest) {
+                case GET_TEMP_REQUEST:
+                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->actualTemp, 2);
+                        break;
 
-                USBD_CtlPrepareRx (pdev, rxBuf, 2);
+                case SET_INSTANT_TEMP_REQUEST:
+                case SET_KP_REQUEST:
+                case SET_KI_REQUEST:
+                case SET_KD_REQUEST:
+                case SET_RAMP1_S_REQUEST:
+                case SET_PREHEAT_S_REQUEST:
+                case SET_RAMP2_S_REQUEST:
+                case SET_REFLOW_S_REQUEST:
+                case SET_COOLING_S_REQUEST:
+                        usbState->pendingRequest = req->bRequest;
+                        usbState->payloadLen = req->wLength;
+#if 0
+                        printf ("SET_REQ rq=%d, len=%d, wLen=%d\n", usbState->pendingRequest, usbState->payloadLen, req->wLength);
+#endif
+                        USBD_CtlPrepareRx (pdev, usbState->payload, usbState->payloadLen);
+                        break;
+
+                default:
+                        usbState->pendingRequest = 0;
+                        USBD_CtlError (pdev, req);
+                        return USBD_FAIL;
+                }
+
                 break;
 
         case USB_REQ_TYPE_STANDARD:
                 switch (req->bRequest) {
-                //                case USB_REQ_GET_DESCRIPTOR:
-                //                        if (req->wValue >> 8 == HID_REPORT_DESC) {
-                //                                len = MIN (HID_MOUSE_REPORT_DESC_SIZE, req->wLength);
-                //                                pbuf = HID_MOUSE_ReportDesc;
-                //                        }
-                //                        else if (req->wValue >> 8 == HID_DESCRIPTOR_TYPE) {
-                //                                pbuf = USBD_HID_Desc;
-                //                                len = MIN (USB_HID_DESC_SIZ, req->wLength);
-                //                        }
-
-                //                        USBD_CtlSendData (pdev, pbuf, len);
-                //                        break;
-
                 case USB_REQ_GET_INTERFACE: {
                         static uint8_t ifalt = 0;
                         USBD_CtlSendData (pdev, &ifalt, 1);
                         break;
                 }
                 }
+
+        case USB_REQ_TYPE_CLASS:
+        default:
+                break;
         }
 
         return USBD_OK;
 }
 
+/*****************************************************************************/
+
 static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev)
 {
-        //USBD_StatusTypeDef USBD_CtlPrepareRx (USBD_HandleTypeDef * pdev, uint8_t * pbuf, uint16_t len);
-        printf ("EP0_RxReady\n");
+        UsbState *usbState = (UsbState *)pdev->pUserData;
+        uint8_t *p = usbState->payload;
+
+        switch (usbState->pendingRequest) {
+        case SET_KP_REQUEST:
+                memcpy (&usbState->reflow->kp, p, 2);
+#if 0
+                printf ("KP set to [%d], %d, %d\n", usbState->reflow->kp, p[0], p[1]);
+#endif
+                break;
+
+        case SET_KI_REQUEST:
+                memcpy (&usbState->reflow->ki, p, 2);
+                break;
+
+        case SET_KD_REQUEST:
+                memcpy (&usbState->reflow->kd, p, 2);
+                break;
+
+        case SET_RAMP1_S_REQUEST:
+                usbState->reflow->ramp1S = p[0];
+                break;
+
+        case SET_PREHEAT_S_REQUEST:
+                usbState->reflow->preHeatS = p[0];
+                break;
+
+        case SET_RAMP2_S_REQUEST:
+                usbState->reflow->ramp2S = p[0];
+                break;
+
+        case SET_REFLOW_S_REQUEST:
+                usbState->reflow->reflowS = p[0];
+                break;
+
+        case SET_COOLING_S_REQUEST:
+                usbState->reflow->coolingS = p[0];
+                break;
+
+        default:
+                usbState->pendingRequest = 0;
+                return USBD_FAIL;
+        }
+
+        usbState->pendingRequest = 0;
+        usbState->payloadLen = 0;
         return USBD_OK;
 }
 

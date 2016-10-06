@@ -6,12 +6,12 @@
 SPI_HandleTypeDef hspi1;
 USBD_HandleTypeDef usbdDevice;
 UART_HandleTypeDef huart1;
+Reflow reflow;
 
 void SystemClock_Config (void);
 void Error_Handler (void);
 static void MX_GPIO_Init (void);
 static void MX_SPI1_Init (void);
-static void MX_USB_PCD_Init (void);
 static void MX_USART1_UART_Init (void);
 
 /*---------------------------------------------------------------------------*/
@@ -148,23 +148,6 @@ static void MX_SPI1_Init (void)
                 Error_Handler ();
         }
 }
-
-/* USB init function */
-// static void MX_USB_PCD_Init (void)
-//{
-
-//        hpcd_USB_FS.Instance = USB;
-//        hpcd_USB_FS.Init.dev_endpoints = 8;
-//        hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
-//        hpcd_USB_FS.Init.ep0_mps = DEP0CTL_MPS_64;
-//        hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-//        hpcd_USB_FS.Init.low_power_enable = DISABLE;
-//        hpcd_USB_FS.Init.lpm_enable = DISABLE;
-//        hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-//        if (HAL_PCD_Init (&hpcd_USB_FS) != HAL_OK) {
-//                Error_Handler ();
-//        }
-//}
 
 /** Configure pins as
         * Analog

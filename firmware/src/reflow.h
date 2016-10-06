@@ -13,7 +13,7 @@
 
 struct _Reflow {
 
-        int16_t instantTemp;
+        int16_t actualTemp;
         int16_t kp;
         int16_t ki;
         int16_t kd;
@@ -23,9 +23,10 @@ struct _Reflow {
         uint8_t ramp2S;
         uint8_t reflowS;
         uint8_t coolingS;
-
 };
 
-typedef _Reflow Reflow;
+typedef struct _Reflow Reflow;
+
+extern Reflow reflow;
 
 #endif // REFLOW_H

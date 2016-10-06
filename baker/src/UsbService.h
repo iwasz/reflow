@@ -54,11 +54,11 @@ public:
         void printDevs ();
 
         void setTempInstant (uint16_t temp);
-        void setP (uint16_t p);
-        void setI (uint16_t i);
-        void setD (uint16_t d);
+        void setKp (uint16_t p);
+        void setKi (uint16_t i);
+        void setKd (uint16_t d);
         uint16_t getCurrentTemp () const;
-        PidData getPidData () const;
+//        PidData getPidData () const;
 
 private:
 
