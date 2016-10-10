@@ -24,5 +24,6 @@ const uint8_t SET_PREHEAT_S_REQUEST = 0x07;
 const uint8_t SET_RAMP2_S_REQUEST = 0x08;
 const uint8_t SET_REFLOW_S_REQUEST = 0x09;
 const uint8_t SET_COOLING_S_REQUEST = 0x0a;
+const uint8_t GET_INTERNAL_TEMP_REQUEST = 0x0b;
 
 #endif /* CONSTANTS_H_ */

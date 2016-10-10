@@ -162,6 +162,14 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
                         USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->actualTemp, 2);
                         break;
 
+                case GET_INTERNAL_TEMP_REQUEST:
+                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->internalTemp, 2);
+                        break;
+
+                case GET_RAW_DATA_REQUEST:
+                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->rawData, 4);
+                        break;
+
                 case SET_INSTANT_TEMP_REQUEST:
                 case SET_KP_REQUEST:
                 case SET_KI_REQUEST:

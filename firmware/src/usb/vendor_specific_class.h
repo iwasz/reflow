@@ -27,6 +27,8 @@ extern "C" {
 #define SET_RAMP2_S_REQUEST ((uint8_t)0x08)
 #define SET_REFLOW_S_REQUEST ((uint8_t)0x09)
 #define SET_COOLING_S_REQUEST ((uint8_t)0x0a)
+#define GET_INTERNAL_TEMP_REQUEST ((uint8_t)0x0b)
+#define GET_RAW_DATA_REQUEST ((uint8_t)0x0c)
 
 extern USBD_ClassTypeDef vendorClass;
 

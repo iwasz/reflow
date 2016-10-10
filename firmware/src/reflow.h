@@ -13,7 +13,10 @@
 
 struct _Reflow {
 
+        uint32_t rawData;
+
         int16_t actualTemp;
+        int16_t internalTemp;
         int16_t kp;
         int16_t ki;
         int16_t kd;

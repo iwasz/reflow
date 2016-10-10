@@ -111,7 +111,7 @@ void UsbService::sendControlRequest (uint8_t request, uint8_t *buff, uint8_t len
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setTempInstant (uint16_t temp)
+void UsbService::setTempInstant (int16_t temp)
 {
         uint8_t buff[2];
         memcpy (buff, (uint8_t *)&temp, 2);
@@ -120,7 +120,7 @@ void UsbService::setTempInstant (uint16_t temp)
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKp (uint16_t ii)
+void UsbService::setKp (int16_t ii)
 {
         uint8_t buff[2];
         memcpy (buff, (uint8_t *)&ii, 2);
@@ -129,7 +129,7 @@ void UsbService::setKp (uint16_t ii)
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKi (uint16_t ii)
+void UsbService::setKi (int16_t ii)
 {
         uint8_t buff[2];
         memcpy (buff, (uint8_t *)&ii, 2);
@@ -138,7 +138,7 @@ void UsbService::setKi (uint16_t ii)
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKd (uint16_t ii)
+void UsbService::setKd (int16_t ii)
 {
         uint8_t buff[2];
         memcpy (buff, (uint8_t *)&ii, 2);
@@ -147,22 +147,32 @@ void UsbService::setKd (uint16_t ii)
 
 /*--------------------------------------------------------------------------*/
 
-uint16_t UsbService::getCurrentTemp () const
+int16_t UsbService::getCurrentTemp() const
 {
-        uint8_t buff[2];
-        sendControlRequest (GET_TEMP_REQUEST, buff, 2, true);
-        int16_t temp = 0;
-        memcpy ((uint8_t *)&temp, buff, 2);
-        return temp;
+//        uint8_t buff[2];
+        uint16_t buff;
+        sendControlRequest (GET_TEMP_REQUEST, (uint8_t *)&buff, 2, true);
+//        int16_t temp = 0;
+//        memcpy ((uint8_t *)&temp, buff, 2);
+        return buff;
 }
 
 /*--------------------------------------------------------------------------*/
 
-//UsbService::PidData UsbService::getPidData () const
-//{
-//        uint8_t buff[24];
-//        sendControlRequest (GET_PID_DATA_REQUEST, buff, 24, true);
-//        UsbService::PidData pd;
-//        memcpy ((uint8_t *)&pd, buff, sizeof (pd));
-//        return pd;
-//}
+int16_t UsbService::getInternalTemp () const
+{
+        uint16_t buff;
+        sendControlRequest (GET_INTERNAL_TEMP_REQUEST, (uint8_t *)&buff, 2, true);
+//        int16_t temp = 0;
+//        memcpy ((uint8_t *)&temp, buff, 2);
+        return buff;
+}
+
+/*--------------------------------------------------------------------------*/
+
+uint32_t UsbService::getRawData () const
+{
+        uint32_t buff;
+        sendControlRequest (GET_INTERNAL_TEMP_REQUEST, (uint8_t *)&buff, 4, true);
+        return buff;
+}
