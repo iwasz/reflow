@@ -14,7 +14,7 @@ static void MX_GPIO_Init (void);
 static void MX_SPI1_Init (void);
 static void MX_USART1_UART_Init (void);
 
-/*---------------------------------------------------------------------------*/
+/*****************************************************************************/
 
 int main (void)
 {
@@ -25,6 +25,7 @@ int main (void)
         MX_GPIO_Init ();
         MX_SPI1_Init ();
         MX_USART1_UART_Init ();
+        SET_BIT (hspi1.Instance->CR2, SPI_RXFIFO_THRESHOLD);
 
         for (int i = 0; i < 1000000; ++i)
                 ;
@@ -32,7 +33,6 @@ int main (void)
         USBD_Init (&usbdDevice, &usbDescriptorsVirtualTable, 0);
         USBD_RegisterClass (&usbdDevice, &vendorClass);
         USBD_Start (&usbdDevice);
-
 
         reflow.actualTemp = 0;
         uint8_t spiRxBuffer[4];
@@ -53,36 +53,66 @@ int main (void)
 #endif
 
 #if 1
-                HAL_UART_Transmit (&huart1, (uint8_t *)"z", 1, 5000);
-                GPIOA->BSRR |= GPIO_PIN_4 << 16;
+                //#define BUFFERSIZE 1
+                //        uint8_t aTxBuffer[BUFFERSIZE];
+                //        uint8_t aRxBuffer[BUFFERSIZE];
+
+                //        switch (HAL_SPI_TransmitReceive1 (&hspi1, (uint8_t *)aTxBuffer, (uint8_t *)aRxBuffer, BUFFERSIZE, 5000)) {
+                //        case HAL_OK:
+                //                break;
+
+                //        case HAL_TIMEOUT:
+                //                /* A Timeout Occur ______________________________________________________*/
+                //                /* Call Timeout Handler */
+                //                Error_Handler ();
+                //                break;
+                //        /* An Error Occur ______________________________________________________ */
+                //        case HAL_ERROR:
+                //                /* Call Timeout Handler */
+                //                Error_Handler ();
+                //                break;
+                //        default:
+                //                break;
+                //        }
+
+                __HAL_RCC_SPI1_CLK_ENABLE ();
+                __HAL_SPI_ENABLE (&hspi1);
+                SET_BIT(hspi1.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+
+
+//                                HAL_UART_Transmit (&huart1, (uint8_t *)"z", 1, 5000);
+//                GPIOA->BSRR |= GPIO_PIN_4 << 16;
                 HAL_Delay (10);
 
-                hspi1.Instance->DR = (uint8_t)0x00;
-//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-//                        ;
+                hspi1.Instance->DR = 0xffff;
+                hspi1.Instance->DR = 0xffff;
+//                (*(uint8_t *)hspi1.Instance->DR) = 0xff;
 
-//                spiRxBuffer[0] = hspi1.Instance->DR;
+                //                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+                //                        ;
 
-//                hspi1.Instance->DR = (uint8_t)0xff;
-//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-//                        ;
-//                spiRxBuffer[1] = hspi1.Instance->DR;
+                //                spiRxBuffer[0] = hspi1.Instance->DR;
 
-//                hspi1.Instance->DR = (uint8_t)0xff;
-//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-//                        ;
-//                spiRxBuffer[2] = hspi1.Instance->DR;
+                //                hspi1.Instance->DR = (uint8_t)0xff;
+                //                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+                //                        ;
+                //                spiRxBuffer[1] = hspi1.Instance->DR;
 
-//                hspi1.Instance->DR = (uint8_t)0xff;
-//                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-//                        ;
-//                spiRxBuffer[3] = hspi1.Instance->DR;
+                //                hspi1.Instance->DR = (uint8_t)0xff;
+                //                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+                //                        ;
+                //                spiRxBuffer[2] = hspi1.Instance->DR;
 
-                HAL_Delay (10);
-                GPIOA->BSRR |= GPIO_PIN_4;
+                //                hspi1.Instance->DR = (uint8_t)0xff;
+                //                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
+                //                        ;
+                //                spiRxBuffer[3] = hspi1.Instance->DR;
 
-//                reflow.actualTemp = (((uint16_t)spiRxBuffer[0] << 8) | (uint16_t)spiRxBuffer[1]) >> 2;
-//                reflow.actualTemp /= 4;
+                //                HAL_Delay (10);
+                //                GPIOA->BSRR |= GPIO_PIN_4;
+
+                //                reflow.actualTemp = (((uint16_t)spiRxBuffer[0] << 8) | (uint16_t)spiRxBuffer[1]) >> 2;
+                //                reflow.actualTemp /= 4;
 
                 HAL_Delay (1000);
 #endif
@@ -137,7 +167,8 @@ static void MX_SPI1_Init (void)
         hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
         hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
         hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-        hspi1.Init.NSS = SPI_NSS_SOFT;
+//        hspi1.Init.NSS = SPI_NSS_SOFT;
+        hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
         hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
         hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
         hspi1.Init.TIMode = SPI_TIMODE_DISABLE;

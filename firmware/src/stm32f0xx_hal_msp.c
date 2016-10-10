@@ -79,26 +79,25 @@ void HAL_SPI_MspInit (SPI_HandleTypeDef *hspi)
                 PA5     ------> SPI1_SCK
                 PA6     ------> SPI1_MISO
                 */
-                GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6;
+                GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6;
                 GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
                 GPIO_InitStruct.Pull = GPIO_NOPULL;
                 GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
                 GPIO_InitStruct.Alternate = GPIO_AF0_SPI1;
                 HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
 
-                GPIO_InitStruct.Pin = GPIO_PIN_4;
-                GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-                GPIO_InitStruct.Pull = GPIO_NOPULL;
-                GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-                HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
-                GPIOA->BSRR |= GPIO_PIN_4;
+                //                GPIO_InitStruct.Pin = GPIO_PIN_4;
+                //                GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+                //                GPIO_InitStruct.Pull = GPIO_NOPULL;
+                //                GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+                //                HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
+                //                GPIOA->BSRR |= GPIO_PIN_4;
 
                 /* USER CODE BEGIN SPI1_MspInit 1 */
 
                 /* USER CODE END SPI1_MspInit 1 */
         }
 }
-
 
 void HAL_UART_MspInit (UART_HandleTypeDef *huart)
 {
