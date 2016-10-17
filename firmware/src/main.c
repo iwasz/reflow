@@ -154,7 +154,12 @@ int main (void)
                                 reflow.setPointTemp = 0;
                                 reflow.phase = IDLE; // No fan in the oven, so cooling not implemented.
                                 break;
+
+                        case CONSTANT_TEMPERATURE:
+                                break;
+
                         default:
+                                reflow.setPointTemp = 0;
                                 break;
                         }
 

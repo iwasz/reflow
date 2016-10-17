@@ -27,10 +27,10 @@ int main (int argc, char **argv)
                 service.init ();
                 service.reset ();
 
-                //                service.setTempInstant (50);
-                service.setKp (5);
-                service.setKi (0.03);
-                service.setKd (150);
+//                service.setTempInstant (150);
+                service.setKp (3);
+                service.setKi (0.003);
+                service.setKd (30);
 
                 service.setPreheatTemp (150);
                 service.setReflowTemp (220);
@@ -38,14 +38,22 @@ int main (int argc, char **argv)
                 service.setPreheatS (120);
                 service.setRamp2S (70);
                 service.setReflowS (10);
-                service.setCoolingS (0);
+                service.setCoolingS (100);
 
                 service.start ();
 
+                Reflow pd = service.getPidData ();
+                std::cout << 0 << " " << pd.actualTemp << std::endl;
+                std::cout << (int)pd.ramp1S << " " << pd.preHeatTemp << std::endl;
+                std::cout << (int)pd.ramp1S + pd.preHeatS << " " << pd.preHeatTemp << std::endl;
+                std::cout << (int)pd.ramp1S + pd.preHeatS + pd.ramp2S << " " << pd.reflowTemp << std::endl;
+                std::cout << (int)pd.ramp1S + pd.preHeatS + pd.ramp2S + pd.reflowS << " " << pd.reflowTemp << std::endl;
+                std::cout << (int)pd.ramp1S + pd.preHeatS + pd.ramp2S + pd.reflowS + pd.coolingS << " " << pd.actualTemp << std::endl;
+                std::cout << std::endl;
+
                 int seconds = 0;
                 while (running) {
-                        Reflow pd = service.getPidData ();
-
+                        pd = service.getPidData ();
                         std::cerr << "aT = " << pd.actualTemp << ", sT = " << pd.setPointTemp << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " << pd.kd
                                   << ", P = " << pd.kp << ", I = " << pd.ki << ", D = " << pd.kd << ", error (P) = " << pd.error
                                   << ", integral = " << pd.integral << ", derivative = " << pd.derivative << ", duty = " << (int)pd.dutyCycle << std::endl;

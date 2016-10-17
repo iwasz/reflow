@@ -42,7 +42,7 @@
 /**
  * Phase of this.
  */
-enum { IDLE, RAMP1, PREHEAT, RAMP2, REFLOW, COOLING };
+enum { IDLE, RAMP1, PREHEAT, RAMP2, REFLOW, COOLING, CONSTANT_TEMPERATURE };
 
 /**
  * The assumption is that the memory representation of this structure is the same on both targets (cortex-m0 and PC).

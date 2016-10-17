@@ -180,7 +180,6 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
 
                 case START_REQUEST:
                         reflow.phase = RAMP1;
-//                        reflowClear ();
                         break;
 
                 case SET_INSTANT_TEMP_REQUEST:
@@ -237,6 +236,7 @@ static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev)
         switch (usbState->pendingRequest) {
         case SET_INSTANT_TEMP_REQUEST:
                 memcpy (&usbState->reflow->setPointTemp, p, usbState->payloadLen);
+                reflow.phase = CONSTANT_TEMPERATURE;
                 break;
 
         case SET_KP_REQUEST:
