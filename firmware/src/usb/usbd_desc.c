@@ -3,9 +3,8 @@
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 #include "string_utils.h"
+#include "reflow.h"
 
-#define USBD_VID 0x20A0
-#define USBD_PID 0x41ff
 #define USBD_LANGID_STRING 0x409
 #define USBD_MANUFACTURER_STRING "iwasz"
 #define USBD_PRODUCT_FS_STRING "reflowctl"

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "stm32f0xx_hal.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
@@ -11,7 +12,8 @@ Reflow reflow;
 void SystemClock_Config (void);
 void Error_Handler (void);
 static void MX_GPIO_Init (void);
-static void MX_USART1_UART_Init (void);
+// static void MX_USART1_UART_Init (void);
+void reflowClear ();
 
 /*****************************************************************************/
 
@@ -29,20 +31,27 @@ int main (void)
         __HAL_RCC_SPI1_CLK_ENABLE ();
         __HAL_RCC_GPIOA_CLK_ENABLE ();
 
-        gpioInitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6;
+        gpioInitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6;
         gpioInitStruct.Mode = GPIO_MODE_AF_PP;
         gpioInitStruct.Pull = GPIO_NOPULL;
         gpioInitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
         gpioInitStruct.Alternate = GPIO_AF0_SPI1;
         HAL_GPIO_Init (GPIOA, &gpioInitStruct);
 
+        gpioInitStruct.Pin = GPIO_PIN_4;
+        gpioInitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+        gpioInitStruct.Pull = GPIO_NOPULL;
+        gpioInitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+        HAL_GPIO_Init (GPIOA, &gpioInitStruct);
+        GPIOA->BSRR |= GPIO_PIN_4;
+
         hspi1.Instance = SPI1;
         hspi1.Init.Mode = SPI_MODE_MASTER;
         hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-        hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+        hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
         hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
         hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-        hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
+        hspi1.Init.NSS = SPI_NSS_SOFT;
         hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
         hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
         hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -63,55 +72,102 @@ int main (void)
 
         //        MX_USART1_UART_Init ();
 
+        // Before USB init
+        reflowClear ();
+        reflow.actualTemp = 0;
+
         USBD_Init (&usbdDevice, &usbDescriptorsVirtualTable, 0);
         USBD_RegisterClass (&usbdDevice, &vendorClass);
         USBD_Start (&usbdDevice);
 
-        reflow.actualTemp = 0;
-        reflow.internalTemp = 0;
+        /*---------------------------------------------------------------------------*/
 
-        HAL_Delay (500);
+        uint32_t rawData;
 
         while (1) {
-#if 0
-                relay_GPIO_Port->BSRR |= relay_Pin;
-                //                HAL_Delay (500);
+                /*--temperature-reading------------------------------------------------------*/
 
-                for (int i = 0; i < 1000000; ++i)
+                GPIOA->BSRR |= GPIO_PIN_4 << 16;
+                HAL_Delay (10);
+                hspi1.Instance->DR = 0xffff;
+
+                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
                         ;
 
-                relay_GPIO_Port->BSRR |= relay_Pin << 16;
-
-                for (int i = 0; i < 1000000; ++i)
-                        ;
-                //                HAL_Delay (500);
-#endif
-
-#if 1
+                rawData = (*(uint16_t *)&hspi1.Instance->DR) << 16;
 
                 hspi1.Instance->DR = 0xffff;
 
                 while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
                         ;
 
-                reflow.rawData = (*(volatile uint16_t *)&hspi1.Instance->DR) << 16;
+                rawData |= (uint32_t) (*(uint16_t *)&hspi1.Instance->DR);
 
-                hspi1.Instance->DR = 0xffff;
-
-                while (!(hspi1.Instance->SR & SPI_FLAG_RXNE))
-                        ;
-
-                reflow.rawData |= (*(volatile uint16_t *)&hspi1.Instance->DR);
-
-                reflow.actualTemp = (int16_t) (reflow.rawData >> 18);
+                reflow.actualTemp = (int16_t) (rawData >> 18);
                 reflow.actualTemp /= 4;
 
-                reflow.internalTemp = (int16_t) ((reflow.rawData & 0xffff) >> 4);
+                reflow.internalTemp = (int16_t) ((rawData & 0xffff) >> 4);
                 reflow.internalTemp /= 16;
 
-                HAL_Delay (1000);
-#endif
+                //                printf ("%d, %d, %lx\n", reflow.actualTemp, reflow.internalTemp, reflow.rawData);
+                HAL_Delay (10);
+                GPIOA->BSRR |= GPIO_PIN_4;
+
+                /*--P-I calculation----------------------------------------------------------*/
+
+//                set style line 1 lc rgb '#0060ad' lt 1 lw 2 pt 7 ps 1.5   # --- blue
+//                plot 'plotting_data1.dat' with linespoints ls 1
+
+                if (reflow.running) {
+                        reflow.error = reflow.setPointTemp - reflow.actualTemp;
+                        reflow.integral = reflow.integral + reflow.error * (CYCLE_MS / 1000);
+                        reflow.derivative = (reflow.error - reflow.prevError) / (CYCLE_MS / 1000);
+                        reflow.dutyCycle = roundf (reflow.kp * reflow.error + reflow.ki * reflow.integral + reflow.kd * reflow.derivative);
+                        reflow.prevError = reflow.error;
+
+                        if (reflow.dutyCycle > 100) {
+                                reflow.dutyCycle = 100;
+                        }
+
+                        if (reflow.dutyCycle < 0) {
+                                reflow.dutyCycle = 0;
+                        }
+
+                        /*--one-pwm-cycle------------------------------------------------------------*/
+
+                        relay_GPIO_Port->BSRR |= relay_Pin;
+                        HAL_Delay (CYCLE_MS * reflow.dutyCycle / 100);
+
+                        relay_GPIO_Port->BSRR |= relay_Pin << 16;
+                        HAL_Delay (CYCLE_MS * (100 - reflow.dutyCycle) / 100);
+                }
+                else {
+                        // To be sure.
+                        relay_GPIO_Port->BSRR |= relay_Pin << 16;
+                }
         }
+}
+
+/**
+ * Czyści wszystko.
+ */
+void reflowClear ()
+{
+        reflow.internalTemp = 0;
+        reflow.dutyCycle = 0;    // TODO zmienić na 0?
+        reflow.setPointTemp = 0; // TODO zmienić na 0?
+        reflow.kp = 1;
+        reflow.ki = 1;
+        reflow.kd = 1;
+        reflow.integral = 0;
+        reflow.ramp1S = 0;
+        reflow.preHeatS = 0;
+        reflow.ramp2S = 0;
+        reflow.reflowS = 0;
+        reflow.coolingS = 0;
+        reflow.running = true;
+        reflow.prevError = 0;
+        reflow.derivative = 0;
 }
 
 /** System Clock Configuration
@@ -179,23 +235,23 @@ static void MX_GPIO_Init (void)
         HAL_GPIO_Init (relay_GPIO_Port, &GPIO_InitStruct);
 }
 
-static void MX_USART1_UART_Init (void)
-{
+// static void MX_USART1_UART_Init (void)
+//{
 
-        huart1.Instance = USART1;
-        huart1.Init.BaudRate = 9600;
-        huart1.Init.WordLength = UART_WORDLENGTH_8B;
-        huart1.Init.StopBits = UART_STOPBITS_1;
-        huart1.Init.Parity = UART_PARITY_NONE;
-        huart1.Init.Mode = UART_MODE_TX_RX;
-        huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-        huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-        huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-        huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-        if (HAL_UART_Init (&huart1) != HAL_OK) {
-                Error_Handler ();
-        }
-}
+//        huart1.Instance = USART1;
+//        huart1.Init.BaudRate = 9600;
+//        huart1.Init.WordLength = UART_WORDLENGTH_8B;
+//        huart1.Init.StopBits = UART_STOPBITS_1;
+//        huart1.Init.Parity = UART_PARITY_NONE;
+//        huart1.Init.Mode = UART_MODE_TX_RX;
+//        huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+//        huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+//        huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//        huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//        if (HAL_UART_Init (&huart1) != HAL_OK) {
+//                Error_Handler ();
+//        }
+//}
 
 /**
   * @brief  This function is executed in case of error occurrence.

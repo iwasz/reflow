@@ -9,7 +9,7 @@
 #include <cstring>
 #include <unistd.h>
 #include "UsbService.h"
-#include "Constants.h"
+#include "reflow.h"
 #include "Exception.h"
 
 /**
@@ -18,6 +18,7 @@
 struct UsbService::Impl {
         libusb_device_handle *device = nullptr;
         //        static void onControlTransferCompletion (libusb_transfer *xfr);
+        bool deviceConnected = false;
 };
 
 /*--------------------------------------------------------------------------*/
@@ -26,7 +27,25 @@ UsbService::UsbService () { impl = new Impl; }
 
 /*--------------------------------------------------------------------------*/
 
-UsbService::~UsbService () { delete impl; }
+UsbService::~UsbService ()
+{
+        if (impl->deviceConnected) {
+                try {
+                        reset ();
+                        stop ();
+                        destroy ();
+                        std::cerr << "Stopped." << std::endl;
+                }
+                catch (std::exception const &e) {
+                        std::cerr << "An exception has occured in ~UsbService. Message : " << e.what () << std::endl;
+                }
+                catch (...) {
+                        std::cerr << "Unknown exception has occured in ~UsbService." << std::endl;
+                }
+        }
+
+        delete impl;
+}
 
 /*--------------------------------------------------------------------------*/
 
@@ -39,7 +58,7 @@ void UsbService::init ()
                 return;
         }
 
-        impl->device = libusb_open_device_with_vid_pid (NULL, VENDOR_ID, PRODUCT_ID);
+        impl->device = libusb_open_device_with_vid_pid (NULL, USBD_VID, USBD_PID);
 
         if (!impl->device) {
                 throw Exception ("Error finding USB device");
@@ -66,12 +85,14 @@ void UsbService::init ()
                 std::cerr << "Interface claimed OK" << std::endl;
         }
 
-//        if ((rc = libusb_set_interface_alt_setting (impl->device, 0, 1)) != 0) {
-//                throw Exception ("Error libusb_set_interface_alt_setting : " + std::string (libusb_error_name (rc)));
-//        }
-//        else {
-//                std::cerr << "libusb_set_interface_alt_setting OK" << std::endl;
-//        }
+        //        if ((rc = libusb_set_interface_alt_setting (impl->device, 0, 1)) != 0) {
+        //                throw Exception ("Error libusb_set_interface_alt_setting : " + std::string (libusb_error_name (rc)));
+        //        }
+        //        else {
+        //                std::cerr << "libusb_set_interface_alt_setting OK" << std::endl;
+        //        }
+
+        impl->deviceConnected = true;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -111,68 +132,59 @@ void UsbService::sendControlRequest (uint8_t request, uint8_t *buff, uint8_t len
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setTempInstant (int16_t temp)
-{
-        uint8_t buff[2];
-        memcpy (buff, (uint8_t *)&temp, 2);
-        sendControlRequest (SET_INSTANT_TEMP_REQUEST, buff, 2, false);
-}
+void UsbService::setTempInstant (float temp) { sendControlRequest (SET_INSTANT_TEMP_REQUEST, (uint8_t *)&temp, sizeof (temp), false); }
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKp (int16_t ii)
-{
-        uint8_t buff[2];
-        memcpy (buff, (uint8_t *)&ii, 2);
-        sendControlRequest (SET_KP_REQUEST, buff, 2, false);
-}
+void UsbService::setKp (float ii) { sendControlRequest (SET_KP_REQUEST, (uint8_t *)&ii, sizeof (ii), false); }
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKi (int16_t ii)
-{
-        uint8_t buff[2];
-        memcpy (buff, (uint8_t *)&ii, 2);
-        sendControlRequest (SET_KI_REQUEST, buff, 2, false);
-}
+void UsbService::setKi (float ii) { sendControlRequest (SET_KI_REQUEST, (uint8_t *)&ii, sizeof (ii), false); }
 
 /*--------------------------------------------------------------------------*/
 
-void UsbService::setKd (int16_t ii)
-{
-        uint8_t buff[2];
-        memcpy (buff, (uint8_t *)&ii, 2);
-        sendControlRequest (SET_KD_REQUEST, buff, 2, false);
-}
+void UsbService::setKd (float ii) { sendControlRequest (SET_KD_REQUEST, (uint8_t *)&ii, sizeof (ii), false); }
 
 /*--------------------------------------------------------------------------*/
 
-int16_t UsbService::getCurrentTemp() const
+float UsbService::getCurrentTemp () const
 {
-//        uint8_t buff[2];
-        uint16_t buff;
-        sendControlRequest (GET_TEMP_REQUEST, (uint8_t *)&buff, 2, true);
-//        int16_t temp = 0;
-//        memcpy ((uint8_t *)&temp, buff, 2);
+        float buff;
+        sendControlRequest (GET_TEMP_REQUEST, (uint8_t *)&buff, sizeof (buff), true);
         return buff;
 }
 
 /*--------------------------------------------------------------------------*/
 
-int16_t UsbService::getInternalTemp () const
+float UsbService::getInternalTemp () const
 {
-        uint16_t buff;
-        sendControlRequest (GET_INTERNAL_TEMP_REQUEST, (uint8_t *)&buff, 2, true);
-//        int16_t temp = 0;
-//        memcpy ((uint8_t *)&temp, buff, 2);
+        float buff;
+        sendControlRequest (GET_INTERNAL_TEMP_REQUEST, (uint8_t *)&buff, sizeof (buff), true);
         return buff;
 }
 
 /*--------------------------------------------------------------------------*/
 
-uint32_t UsbService::getRawData () const
+Reflow UsbService::getPidData () const
 {
-        uint32_t buff;
-        sendControlRequest (GET_INTERNAL_TEMP_REQUEST, (uint8_t *)&buff, 4, true);
+        Reflow buff;
+        sendControlRequest (GET_RAW_DATA_REQUEST, (uint8_t *)&buff, sizeof (Reflow), true);
         return buff;
+}
+
+/*--------------------------------------------------------------------------*/
+
+void UsbService::reset ()
+{
+        uint8_t dummy;
+        sendControlRequest (RESET_REQUEST, &dummy, 0, true);
+}
+
+/*--------------------------------------------------------------------------*/
+
+void UsbService::stop ()
+{
+        uint8_t dummy;
+        sendControlRequest (STOP_REQUEST, &dummy, 0, true);
 }

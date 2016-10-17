@@ -8,43 +8,56 @@
 
 #include <unistd.h>
 #include <iostream>
+#include <csignal>
 #include "UsbService.h"
-#include "Constants.h"
+
+void sigHandler (int signo);
+bool running = true;
 
 /*--------------------------------------------------------------------------*/
 
 int main (int argc, char **argv)
 {
+        if (signal (SIGINT, sigHandler) == SIG_ERR) {
+                std::cerr << "Can't connect signals." << std::endl;
+        }
+
         try {
-                UsbServiceGuard<UsbService> guard;
+                UsbService service;
+                service.init ();
+                service.reset ();
 
-                //                guard.service.setTempInstant (50);
-                guard.service.setKp (-666);
-                //                guard.service.setI (1);
-                //                guard.service.setD (1);
+                service.setTempInstant (50);
+                service.setKp (5);
+                service.setKi (0.03);
+                service.setKd (150);
 
-                while (true) {
-                        std::cerr << "Thermocouple : " << guard.service.getCurrentTemp () << ", internal : " << guard.service.getInternalTemp ()
-                                  << ", raw data : " << std::hex << guard.service.getRawData () << std::endl;
+                int seconds = 0;
+                while (running) {
+                        Reflow pd = service.getPidData ();
 
-                        //                        UsbService::PidData pd = guard.service.getPidData ();
+                        std::cerr << "aT = " << pd.actualTemp << ", sT = " << pd.setPointTemp << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " << pd.kd
+                                  << ", P = " << pd.kp << ", I = " << pd.ki << ", D = " << pd.kd << ", error (P) = " << pd.error
+                                  << ", integral = " << pd.integral << ", derivative = " << pd.derivative << ", duty = " << (int)pd.dutyCycle << std::endl;
 
-                        //                        std::cerr << "T = " << guard.service.getCurrentTemp () << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd =
-                        //                        " <<
-                        //                        pd.kd
-                        //                                  << ", P = " << pd.p << ", I = " << pd.i << ", D = " << pd.d << ", fac = " << pd.fac << ", U = " <<
-                        //                                  pd.p +
-                        //                                  pd.i - pd.d
-                        //                                  << std::endl;
+                        std::cout << ++seconds << " " << pd.actualTemp << std::endl;
                         sleep (1);
                 }
         }
         catch (std::exception const &e) {
-                std::cerr << "An exception has occured in ~UsbServiceGuard. Message : " << e.what () << std::endl;
+                std::cerr << "An exception has occured in ~UsbService Message : " << e.what () << std::endl;
         }
         catch (...) {
-                std::cerr << "Unknown exception has occured in ~UsbServiceGuard." << std::endl;
+                std::cerr << "Unknown exception has occured in ~UsbService" << std::endl;
         }
 
         return 0;
+}
+/*--------------------------------------------------------------------------*/
+
+void sigHandler (int signo)
+{
+        if (signo == SIGINT) {
+                running = false;
+        }
 }

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <libusb.h>
 #include <iostream>
+#include "reflow.h"
 
 /**
  * USB stuff for anyKey.
@@ -21,16 +22,6 @@ class UsbService {
 public:
 
         typedef std::vector <uint8_t> Buffer;
-
-//        struct __attribute__ ((packed)) PidData {
-//                int16_t kp;
-//                int16_t ki;
-//                int16_t kd;
-//                int32_t p;
-//                int32_t i;
-//                int32_t d;
-//                int16_t fac;
-//        };
 
         UsbService ();
         ~UsbService ();
@@ -53,15 +44,15 @@ public:
          */
         void printDevs ();
 
-        void setTempInstant (int16_t temp);
-        void setKp (int16_t p);
-        void setKi (int16_t i);
-        void setKd (int16_t d);
-        int16_t getCurrentTemp () const;
-        int16_t getInternalTemp () const;
-        uint32_t getRawData () const;
-
-//        PidData getPidData () const;
+        void setTempInstant (float temp);
+        void setKp (float p);
+        void setKi (float i);
+        void setKd (float d);
+        float getCurrentTemp () const;
+        float getInternalTemp () const;
+        Reflow getPidData () const;
+        void reset ();
+        void stop ();
 
 private:
 
@@ -82,19 +73,6 @@ struct UsbServiceGuard {
         UsbServiceGuard ()
         {
                 service.init ();
-        }
-
-        ~UsbServiceGuard ()
-        {
-                try {
-                        service.destroy ();
-                }
-                catch (std::exception const &e) {
-                        std::cerr << "An exception has occured in ~UsbServiceGuard. Message : " << e.what () << std::endl;
-                }
-                catch (...) {
-                        std::cerr << "Unknown exception has occured in ~UsbServiceGuard." << std::endl;
-                }
         }
 
         Service service;

@@ -159,15 +159,23 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
 #endif
                 switch (req->bRequest) {
                 case GET_TEMP_REQUEST:
-                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->actualTemp, 2);
+                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->actualTemp, 4);
                         break;
 
                 case GET_INTERNAL_TEMP_REQUEST:
-                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->internalTemp, 2);
+                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->internalTemp, 4);
                         break;
 
                 case GET_RAW_DATA_REQUEST:
-                        USBD_CtlSendData (pdev, (uint8_t *)&usbState->reflow->rawData, 4);
+                        USBD_CtlSendData (pdev, (uint8_t *)usbState->reflow, sizeof (Reflow));
+                        break;
+
+                case RESET_REQUEST:
+                        reflowClear ();
+                        break;
+
+                case STOP_REQUEST:
+                        reflow.running = false;
                         break;
 
                 case SET_INSTANT_TEMP_REQUEST:
@@ -220,19 +228,23 @@ static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev)
         uint8_t *p = usbState->payload;
 
         switch (usbState->pendingRequest) {
+        case SET_INSTANT_TEMP_REQUEST:
+                memcpy (&usbState->reflow->setPointTemp, p, usbState->payloadLen);
+                break;
+
         case SET_KP_REQUEST:
-                memcpy (&usbState->reflow->kp, p, 2);
+                memcpy (&usbState->reflow->kp, p, usbState->payloadLen);
 #if 0
                 printf ("KP set to [%d], %d, %d\n", usbState->reflow->kp, p[0], p[1]);
 #endif
                 break;
 
         case SET_KI_REQUEST:
-                memcpy (&usbState->reflow->ki, p, 2);
+                memcpy (&usbState->reflow->ki, p, usbState->payloadLen);
                 break;
 
         case SET_KD_REQUEST:
-                memcpy (&usbState->reflow->kd, p, 2);
+                memcpy (&usbState->reflow->kd, p, usbState->payloadLen);
                 break;
 
         case SET_RAMP1_S_REQUEST:

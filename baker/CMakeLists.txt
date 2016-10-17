@@ -11,7 +11,7 @@ SET (CMAKE_C_FLAGS "-Wall -Winvalid-pch -ffunction-sections -fdata-sections")
 SET (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
 SET (CMAKE_C_FLAGS_RELEASE "-Wall -Winvalid-pch -ffunction-sections -fdata-sections -ffast-math -DNDEBUG")
 SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c++11")
- 
+
 SET (CMAKE_VERBOSE_MAKEFILE off)
 
 #find_package (Boost REQUIRED)
@@ -28,12 +28,13 @@ pkg_check_modules (LIBUSBX REQUIRED "libusb-1.0")
 INCLUDE_DIRECTORIES (${LIBUSBX_INCLUDE_DIRS})
 link_directories(${LIBUSBX_LIBRARY_DIRS})
 
-INCLUDE_DIRECTORIES (src)
-LIST (APPEND APP_SOURCES "src/Constants.h")
+INCLUDE_DIRECTORIES ("src/")
+INCLUDE_DIRECTORIES ("../common/")
 LIST (APPEND APP_SOURCES "src/Exception.h")
 LIST (APPEND APP_SOURCES "src/main.cc")
 LIST (APPEND APP_SOURCES "src/UsbService.h")
 LIST (APPEND APP_SOURCES "src/UsbService.cc")
+LIST (APPEND APP_SOURCES "../common/reflow.h")
 
 add_executable (${PROJECT_NAME} ${APP_SOURCES})
 #TARGET_LINK_LIBRARIES (${PROJECT_NAME} ${GLIB_LIBRARIES})
