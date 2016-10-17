@@ -48,11 +48,20 @@ public:
         void setKp (float p);
         void setKi (float i);
         void setKd (float d);
+        void setReflowTemp (uint16_t temp);
+        void setPreheatTemp (uint16_t temp);
+        void setRamp1S (uint8_t s);
+        void setPreheatS (uint8_t s);
+        void setRamp2S (uint8_t s);
+        void setReflowS (uint8_t s);
+        void setCoolingS (uint8_t s);
+
         float getCurrentTemp () const;
         float getInternalTemp () const;
         Reflow getPidData () const;
         void reset ();
         void stop ();
+        void start ();
 
 private:
 

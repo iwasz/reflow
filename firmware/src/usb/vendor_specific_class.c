@@ -175,7 +175,12 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
                         break;
 
                 case STOP_REQUEST:
-                        reflow.running = false;
+                        reflow.phase = IDLE;
+                        break;
+
+                case START_REQUEST:
+                        reflow.phase = RAMP1;
+//                        reflowClear ();
                         break;
 
                 case SET_INSTANT_TEMP_REQUEST:
@@ -187,6 +192,8 @@ static uint8_t usbdVendorSetup (USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
                 case SET_RAMP2_S_REQUEST:
                 case SET_REFLOW_S_REQUEST:
                 case SET_COOLING_S_REQUEST:
+                case SET_PREHEAT_TEMP_REQUEST:
+                case SET_REFLOW_TEMP_REQUEST:
                         usbState->pendingRequest = req->bRequest;
                         usbState->payloadLen = req->wLength;
 #if 0
@@ -265,6 +272,14 @@ static uint8_t EP0_RxReady (struct _USBD_HandleTypeDef *pdev)
 
         case SET_COOLING_S_REQUEST:
                 usbState->reflow->coolingS = p[0];
+                break;
+
+        case SET_PREHEAT_TEMP_REQUEST:
+                memcpy (&usbState->reflow->preHeatTemp, p, usbState->payloadLen);
+                break;
+
+        case SET_REFLOW_TEMP_REQUEST:
+                memcpy (&usbState->reflow->reflowTemp, p, usbState->payloadLen);
                 break;
 
         default:

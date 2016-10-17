@@ -188,3 +188,21 @@ void UsbService::stop ()
         uint8_t dummy;
         sendControlRequest (STOP_REQUEST, &dummy, 0, true);
 }
+
+/*--------------------------------------------------------------------------*/
+
+void UsbService::start ()
+{
+        uint8_t dummy;
+        sendControlRequest (START_REQUEST, &dummy, 0, true);
+}
+
+/*--------------------------------------------------------------------------*/
+
+void UsbService::setReflowTemp (uint16_t ii) { sendControlRequest (SET_REFLOW_TEMP_REQUEST, (uint8_t *)&ii, sizeof (ii), false); }
+void UsbService::setPreheatTemp (uint16_t ii) { sendControlRequest (SET_PREHEAT_TEMP_REQUEST, (uint8_t *)&ii, sizeof (ii), false); }
+void UsbService::setRamp1S (uint8_t s) { sendControlRequest (SET_RAMP1_S_REQUEST, (uint8_t *)&s, sizeof (s), false); }
+void UsbService::setPreheatS (uint8_t s) { sendControlRequest (SET_PREHEAT_S_REQUEST, (uint8_t *)&s, sizeof (s), false); }
+void UsbService::setRamp2S (uint8_t s) { sendControlRequest (SET_RAMP2_S_REQUEST, (uint8_t *)&s, sizeof (s), false); }
+void UsbService::setReflowS (uint8_t s) { sendControlRequest (SET_REFLOW_S_REQUEST, (uint8_t *)&s, sizeof (s), false); }
+void UsbService::setCoolingS (uint8_t s) { sendControlRequest (SET_COOLING_S_REQUEST, (uint8_t *)&s, sizeof (s), false); }

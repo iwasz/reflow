@@ -27,10 +27,20 @@ int main (int argc, char **argv)
                 service.init ();
                 service.reset ();
 
-                service.setTempInstant (50);
+                //                service.setTempInstant (50);
                 service.setKp (5);
                 service.setKi (0.03);
                 service.setKd (150);
+
+                service.setPreheatTemp (150);
+                service.setReflowTemp (220);
+                service.setRamp1S (120);
+                service.setPreheatS (120);
+                service.setRamp2S (70);
+                service.setReflowS (10);
+                service.setCoolingS (0);
+
+                service.start ();
 
                 int seconds = 0;
                 while (running) {

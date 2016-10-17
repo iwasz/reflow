@@ -112,13 +112,54 @@ int main (void)
                 //                printf ("%d, %d, %lx\n", reflow.actualTemp, reflow.internalTemp, reflow.rawData);
                 HAL_Delay (10);
                 GPIOA->BSRR |= GPIO_PIN_4;
+                uint16_t startTemp = reflow.actualTemp;
 
-                /*--P-I calculation----------------------------------------------------------*/
+                /*--State-machine-things-----------------------------------------------------*/
+                if (reflow.phase != IDLE) {
+                        uint16_t actualTimeS = (HAL_GetTick () - reflow.startTimeMs) / 1000;
 
-//                set style line 1 lc rgb '#0060ad' lt 1 lw 2 pt 7 ps 1.5   # --- blue
-//                plot 'plotting_data1.dat' with linespoints ls 1
+                        switch (reflow.phase) {
+                        case RAMP1:
+                                reflow.setPointTemp = ((reflow.preHeatTemp - startTemp) * actualTimeS / reflow.ramp1S) + startTemp;
+                                if (actualTimeS >= reflow.ramp1S) {
+                                        reflow.startTimeMs = HAL_GetTick ();
+                                        reflow.phase = PREHEAT;
+                                }
+                                break;
 
-                if (reflow.running) {
+                        case PREHEAT:
+                                reflow.setPointTemp = reflow.preHeatTemp;
+                                if (actualTimeS >= reflow.preHeatS) {
+                                        reflow.phase = RAMP2;
+                                        reflow.startTimeMs = HAL_GetTick ();
+                                }
+                                break;
+
+                        case RAMP2:
+                                reflow.setPointTemp = ((reflow.reflowTemp - reflow.preHeatTemp) * actualTimeS / reflow.ramp2S) + reflow.preHeatTemp;
+                                if (actualTimeS >= reflow.ramp2S) {
+                                        reflow.phase = REFLOW;
+                                        reflow.startTimeMs = HAL_GetTick ();
+                                }
+                                break;
+
+                        case REFLOW:
+                                if (actualTimeS >= reflow.reflowS) {
+                                        reflow.phase = COOLING;
+                                        reflow.startTimeMs = HAL_GetTick ();
+                                }
+                                break;
+
+                        case COOLING:
+                                reflow.setPointTemp = 0;
+                                reflow.phase = IDLE; // No fan in the oven, so cooling not implemented.
+                                break;
+                        default:
+                                break;
+                        }
+
+                        /*--P-I calculation----------------------------------------------------------*/
+
                         reflow.error = reflow.setPointTemp - reflow.actualTemp;
                         reflow.integral = reflow.integral + reflow.error * (CYCLE_MS / 1000);
                         reflow.derivative = (reflow.error - reflow.prevError) / (CYCLE_MS / 1000);
@@ -141,7 +182,7 @@ int main (void)
                         relay_GPIO_Port->BSRR |= relay_Pin << 16;
                         HAL_Delay (CYCLE_MS * (100 - reflow.dutyCycle) / 100);
                 }
-                else {
+                else { // reflow.running == IDLE
                         // To be sure.
                         relay_GPIO_Port->BSRR |= relay_Pin << 16;
                 }
@@ -154,8 +195,8 @@ int main (void)
 void reflowClear ()
 {
         reflow.internalTemp = 0;
-        reflow.dutyCycle = 0;    // TODO zmienić na 0?
-        reflow.setPointTemp = 0; // TODO zmienić na 0?
+        reflow.dutyCycle = 0;
+        reflow.setPointTemp = 0;
         reflow.kp = 1;
         reflow.ki = 1;
         reflow.kd = 1;
@@ -165,9 +206,12 @@ void reflowClear ()
         reflow.ramp2S = 0;
         reflow.reflowS = 0;
         reflow.coolingS = 0;
-        reflow.running = true;
+        reflow.phase = IDLE;
         reflow.prevError = 0;
         reflow.derivative = 0;
+        reflow.startTimeMs = HAL_GetTick ();
+        reflow.preHeatTemp = 0;
+        reflow.reflowTemp = 0;
 }
 
 /** System Clock Configuration
@@ -266,32 +310,3 @@ void Error_Handler (void)
         }
         /* USER CODE END Error_Handler */
 }
-
-#ifdef USE_FULL_ASSERT
-
-/**
-   * @brief Reports the name of the source file and the source line number
-   * where the assert_param error has occurred.
-   * @param file: pointer to the source file name
-   * @param line: assert_param error line source number
-   * @retval None
-   */
-void assert_failed (uint8_t *file, uint32_t line)
-{
-        /* USER CODE BEGIN 6 */
-        /* User can add his own implementation to report the file name and line number,
-          ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-        /* USER CODE END 6 */
-}
-
-#endif
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-*/
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

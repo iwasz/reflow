@@ -32,9 +32,17 @@
 #define GET_RAW_DATA_REQUEST ((uint8_t)0x0c)
 #define RESET_REQUEST ((uint8_t)0x0d)
 #define STOP_REQUEST ((uint8_t)0x0e)
+#define START_REQUEST ((uint8_t)0x0f)
+#define SET_PREHEAT_TEMP_REQUEST ((uint8_t)0x10)
+#define SET_REFLOW_TEMP_REQUEST ((uint8_t)0x11)
 
 #define USBD_VID 0x20A0
 #define USBD_PID 0x41ff
+
+/**
+ * Phase of this.
+ */
+enum { IDLE, RAMP1, PREHEAT, RAMP2, REFLOW, COOLING };
 
 /**
  * The assumption is that the memory representation of this structure is the same on both targets (cortex-m0 and PC).
@@ -48,21 +56,22 @@ struct _Reflow {
         float actualTemp;
         float internalTemp;
 
-        /// Temperatura do której PI controller będzie dążył.
-        float setPointTemp;
-        float error;      // P
-        float prevError;  // Pprev
-        float integral;   // I
-        float derivative; // D
+        float setPointTemp; /// Temperatura do której PI controller będzie dążył.
+        float error;        // P
+        float prevError;    // Pprev
+        float integral;     // I
+        float derivative;   // D
+        uint32_t startTimeMs;
         int16_t dutyCycle;
+        uint16_t preHeatTemp;
+        uint16_t reflowTemp;
 
         uint8_t ramp1S;
         uint8_t preHeatS;
         uint8_t ramp2S;
         uint8_t reflowS;
         uint8_t coolingS;
-
-        bool running; // Uwaga, domyślnie to jest na TRUE!
+        uint8_t phase;
 };
 
 typedef struct _Reflow Reflow;
