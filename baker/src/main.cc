@@ -28,9 +28,9 @@ int main (int argc, char **argv)
                 service.reset ();
 
 //                service.setTempInstant (150);
-                service.setKp (3);
-                service.setKi (0.003);
-                service.setKd (30);
+                service.setKp (4);
+                service.setKi (0.004);
+                service.setKd (40);
 
                 service.setPreheatTemp (150);
                 service.setReflowTemp (220);
@@ -54,7 +54,7 @@ int main (int argc, char **argv)
                 int seconds = 0;
                 while (running) {
                         pd = service.getPidData ();
-                        std::cerr << "aT = " << pd.actualTemp << ", sT = " << pd.setPointTemp << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " << pd.kd
+                        std::cerr << seconds << ", aT = " << pd.actualTemp << ", sT = " << pd.setPointTemp << ", Kp = " << pd.kp << ", Ki = " << pd.ki << ", Kd = " << pd.kd
                                   << ", P = " << pd.kp << ", I = " << pd.ki << ", D = " << pd.kd << ", error (P) = " << pd.error
                                   << ", integral = " << pd.integral << ", derivative = " << pd.derivative << ", duty = " << (int)pd.dutyCycle << std::endl;
 

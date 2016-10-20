@@ -84,6 +84,8 @@ int main (void)
 
         uint32_t rawData;
 
+        // Reset once again to have accureate time.
+        reflow.startTimeMs = HAL_GetTick ();
         while (1) {
                 /*--temperature-reading------------------------------------------------------*/
 
